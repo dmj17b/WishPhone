@@ -76,41 +76,49 @@ def main():
     GPIO.setup(PHONE_SWITCH,GPIO.IN,pull_up_down=GPIO.PUD_UP)
     GPIO.setup(COIN_SLOT,GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
 
-    coinDetected = False
-    while(coinDetected==False):
-        coinDetected = not GPIO.input(COIN_SLOT)
-        time.sleep(0.001)
-        print("Waiting on coin...")
 
-    flashLED()    
-        
-    # First check to see if phone is on the hook:
-    hook = GPIO.input(PHONE_SWITCH)
-    if(hook):
-        print("Phone off hook")
-        exit()
+    while True:
+        # Wait until a coin is detected:
+        coinDetected = False
+        while(coinDetected==False):
+            coinDetected = not GPIO.input(COIN_SLOT)
+            time.sleep(0.001)
 
-    # Ring phone until phone is picked up or it times out
-    startTime = time.time()
-    timeRinging = 0
-    while(not hook and timeRinging < 15):
-        GPIO.output(LED,GPIO.HIGH)
-        ring()
-        GPIO.output(LED,GPIO.LOW)
-        time.sleep(1)
-        timeRinging = time.time() - startTime
+        flashLED()    
+            
+        # First check to see if phone is on the hook:
         hook = GPIO.input(PHONE_SWITCH)
+        if(hook):
+            print("Phone off hook")
+            exit()
 
-    # Play the answering machine message
-    a = AudioFile("RobBeep.wav")
-    a.play()
-    a.close()
+        # Ring phone until phone is picked up or it times out
+        startTime = time.time()
+        timeRinging = 0
+        while(not hook and timeRinging < 15):
+            GPIO.output(LED,GPIO.HIGH)  #LED On
+            ring()  #Ring on
+            GPIO.output(LED,GPIO.LOW)#LED Off
+            time.sleep(1)   #Pause until next ring
+            timeRinging = time.time() - startTime   #Calculate time ringing
+            hook = GPIO.input(PHONE_SWITCH) #Check if phone is picked up
 
-    print("Recording wish now...")
-    GPIO.output(LED,GPIO.HIGH)
-    time.sleep(5)
-    print("Finished recording wish")
-    GPIO.output(LED,GPIO.LOW)
+        time.sleep(1.5)
+        # Play a random AI voice message
+        voiceRecording = "recordings/"+str(random.randint(1,4))+".wav"
+        a = AudioFile(voiceRecording)
+        a.play()
+        a.close()
+        # Play the beep
+        a = AudioFile("Beep.wav")
+        a.play()
+        a.close()
+
+        print("Recording wish now...")
+        GPIO.output(LED,GPIO.HIGH)
+        time.sleep(5)
+        print("Finished recording wish")
+        GPIO.output(LED,GPIO.LOW)
     
     
 if __name__ == "__main__":
